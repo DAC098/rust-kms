@@ -1,0 +1,5 @@
+*.swp
+
+/target
+
+rust-kms-local/test.*

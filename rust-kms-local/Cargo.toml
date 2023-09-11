@@ -1,0 +1,23 @@
+[package]
+name = "rust-kms-local"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+binary = ["dep:bincode"]
+json = ["dep:serde_json"]
+
+rand = ["dep:rand"]
+
+[dependencies]
+rust-kms-core = { path = "../rust-kms-core" }
+
+rand = { version = "0.8.5", features = ["small_rng", "std"], optional = true }
+
+serde = { version = "1.0" }
+serde_json = { version = "1", optional = true }
+bincode = { version = "1.3.3", optional = true }
+
+[dev-dependencies]
