@@ -2,21 +2,11 @@ use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::sync::{Mutex, RwLock, PoisonError};
 use std::sync::RwLockReadGuard;
-use std::path::Path;
 use std::fmt;
 
 #[derive(Debug)]
 pub enum Error {
     Poisoned,
-
-    #[cfg(any(feature = "binary", feature = "json"))]
-    Io(std::io::Error),
-
-    #[cfg(feature = "binary")]
-    Bincode(bincode::Error),
-
-    #[cfg(feature = "json")]
-    Json(serde_json::Error)
 }
 
 impl<T> From<PoisonError<T>> for Error {
@@ -118,104 +108,6 @@ where
 
 use serde::ser::{Serialize, Serializer, SerializeStruct};
 use serde::de::{self, Deserialize, Deserializer, Visitor, MapAccess, SeqAccess};
-
-#[cfg(any(feature = "binary", feature = "json"))]
-impl<KeyType> Local<KeyType>
-where
-    KeyType: de::DeserializeOwned
-{
-    #[cfg(feature = "binary")]
-    fn from_binary_file<P>(path: P) -> Result<Self, Error>
-    where
-        P: AsRef<Path>
-    {
-        let file = std::fs::OpenOptions::new()
-            .read(true)
-            .open(path)
-            .map_err(|e| Error::Io(e))?;
-        let reader = std::io::BufReader::new(file);
-
-        let deserialized = bincode::deserialize_from(reader)
-            .map_err(|e| match *e {
-                bincode::ErrorKind::Io(io) => Error::Io(io),
-                _ => Error::Bincode(e)
-            })?;
-
-        Ok(deserialized)
-    }
-
-    #[cfg(feature = "json")]
-    fn from_json_file<P>(path: P) -> Result<Self, Error>
-    where
-        P: AsRef<Path>
-    {
-        use serde_json::error::Category;
-
-        let file = std::fs::OpenOptions::new()
-            .read(true)
-            .open(path)
-            .map_err(|e| Error::Io(e))?;
-        let reader = std::io::BufReader::new(file);
-
-        let deserialized = serde_json::from_reader(reader)
-            .map_err(|e| match e.classify() {
-                Category::Io => Error::Io(e.into()),
-                _ => Error::Json(e)
-            })?;
-
-        Ok(deserialized)
-    }
-}
-
-#[cfg(any(feature = "binary", feature = "json"))]
-impl<KeyType> Local<KeyType>
-where
-    KeyType: Serialize
-{
-    #[cfg(feature = "binary")]
-    fn to_binary_file<P>(&self, path: P) -> Result<(), Error>
-    where
-        P: AsRef<Path>
-    {
-        let file = std::fs::OpenOptions::new()
-            .write(true)
-            .truncate(true)
-            .open(path)
-            .map_err(|e| Error::Io(e))?;
-        let writer = std::io::BufWriter::new(file);
-
-        bincode::serialize_into(writer, self)
-            .map_err(|e| match *e {
-                bincode::ErrorKind::Io(io) => Error::Io(io),
-                _ => Error::Bincode(e)
-            })?;
-
-        Ok(())
-    }
-
-    #[cfg(feature = "json")]
-    fn to_json_file<P>(&self, path: P) -> Result<(), Error>
-    where
-        P: AsRef<Path>
-    {
-        use serde_json::error::Category;
-
-        let file = std::fs::OpenOptions::new()
-            .write(true)
-            .truncate(true)
-            .open(path)
-            .map_err(|e| Error::Io(e))?;
-        let writer = std::io::BufWriter::new(file);
-
-        serde_json::to_writer(writer, self)
-            .map_err(|e| match e.classify() {
-                Category::Io => Error::Io(e.into()),
-                _ => Error::Json(e)
-            })?;
-
-        Ok(())
-    }
-}
 
 impl<KeyType> Serialize for Local<KeyType>
 where
@@ -347,12 +239,12 @@ where
 }
 
 #[cfg(test)]
-mod test {
+pub(crate) mod test {
     use super::*;
 
-    type TestLocal = Local<u64>;
+    pub type TestLocal = Local<u64>;
 
-    fn assert_local_eq<K>(a: &Local<K>, b: &Local<K>)
+    pub fn assert_local_eq<K>(a: &Local<K>, b: &Local<K>)
     where
         K: std::cmp::PartialEq + std::fmt::Debug
     {
@@ -371,27 +263,15 @@ mod test {
         }
     }
 
-    fn create_store() -> TestLocal {
+    pub fn create_store() -> TestLocal {
         let local = Local::new();
-        let values = [0, 1, 2, 4, 5, 9, 11, 12];
+        let values = [0, 1, 2, 4, 5, 9, 11, 12, 16, 17, 22, 26];
 
         for v in &values {
             local.update(*v).expect("failed to add value");
         }
 
         local
-    }
-
-    fn create_test_file<P>(path: P) -> std::fs::File
-    where
-        P: AsRef<std::path::Path>
-    {
-        std::fs::OpenOptions::new()
-            .write(true)
-            .truncate(true)
-            .create(true)
-            .open(path)
-            .expect("failed to create test file")
     }
 
     #[test]
@@ -405,39 +285,5 @@ mod test {
             .expect("failed to deserialize Local from json string");
 
         assert_local_eq(&local, &and_back)
-    }
-
-    #[test]
-    #[cfg(feature = "binary")]
-    fn binary() {
-        let file_name = "test.binary";
-        let local = create_store();
-
-        create_test_file(file_name);
-
-        local.to_binary_file(file_name)
-            .expect("failed to save to binary file");
-
-        let and_back: TestLocal = Local::from_binary_file(file_name)
-            .expect("failed to load binary file");
-
-        assert_local_eq(&local, &and_back);
-    }
-
-    #[test]
-    #[cfg(feature = "json")]
-    fn json() {
-        let file_name = "test.json";
-        let local = create_store();
-
-        create_test_file(file_name);
-
-        local.to_json_file(file_name)
-            .expect("failed to save to json file");
-
-        let and_back: TestLocal = Local::from_json_file(file_name)
-            .expect("failed to load json file");
-
-        assert_local_eq(&local, &and_back);
     }
 }
