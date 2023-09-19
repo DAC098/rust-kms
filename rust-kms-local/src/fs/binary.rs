@@ -44,6 +44,18 @@ impl<KeyType> std::ops::Deref for Binary<KeyType> {
     }
 }
 
+impl<KeyType> std::fmt::Debug for Binary<KeyType>
+where
+    KeyType: std::fmt::Debug
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Binary")
+            .field("manager", &self.manager)
+            .field("path", &self.path)
+            .finish()
+    }
+}
+
 impl<KeyType> Wrapper for Binary<KeyType>
 where
     KeyType: Serialize + DeserializeOwned

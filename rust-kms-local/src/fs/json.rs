@@ -44,6 +44,18 @@ impl<KeyType> std::ops::Deref for Json<KeyType> {
     }
 }
 
+impl<KeyType> std::fmt::Debug for Json<KeyType>
+where
+    KeyType: std::fmt::Debug
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Json")
+            .field("manager", &self.manager)
+            .field("path", &self.path)
+            .finish()
+    }
+}
+
 impl<KeyType> Wrapper for Json<KeyType>
 where
     KeyType: Serialize + DeserializeOwned

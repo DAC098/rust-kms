@@ -25,7 +25,37 @@ impl fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
-#[derive(Debug)]
+pub struct VersionedKey<T>(
+    pub u64,
+    pub T
+);
+
+impl<T> VersionedKey<T> {
+    pub fn version(&self) -> &u64 {
+        &self.0
+    }
+}
+
+impl<T> std::ops::Deref for VersionedKey<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.1
+    }
+}
+
+impl<T> fmt::Debug for VersionedKey<T>
+where
+    T: fmt::Debug
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("VersionedKey")
+            .field(&self.0)
+            .field(&self.1)
+            .finish()
+    }
+}
+
 pub struct Local<KeyType> {
     store: RwLock<BTreeMap<u64, KeyType>>,
     count: Mutex<u64>,
@@ -85,14 +115,14 @@ where
         Ok(Some(key.clone()))
     }
 
-    pub fn get_version_key(&self, version: &u64) -> Result<Option<(u64, KeyType)>, Error> {
+    pub fn get_version(&self, version: &u64) -> Result<Option<VersionedKey<KeyType>>, Error> {
         let store_reader = self.store.read()?;
 
         let Some((ver, key)) = store_reader.get_key_value(version) else {
             return Ok(None);
         };
 
-        Ok(Some((*ver, key.clone())))
+        Ok(Some(VersionedKey(*ver, key.clone())))
     }
 
     pub fn latest(&self) -> Result<Option<KeyType>, Error> {
@@ -105,14 +135,26 @@ where
         Ok(Some(key.clone()))
     }
 
-    pub fn latest_version_key(&self) -> Result<Option<(u64, KeyType)>, Error> {
+    pub fn latest_version(&self) -> Result<Option<VersionedKey<KeyType>>, Error> {
         let store_reader = self.store.read()?;
 
         let Some((version, key)) = store_reader.last_key_value() else {
             return Ok(None);
         };
 
-        Ok(Some((*version, key.clone())))
+        Ok(Some(VersionedKey(*version, key.clone())))
+    }
+}
+
+impl<KeyType> fmt::Debug for Local<KeyType>
+where
+    KeyType: fmt::Debug
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Local")
+            .field("store", &self.store)
+            .field("count", &self.count)
+            .finish()
     }
 }
 

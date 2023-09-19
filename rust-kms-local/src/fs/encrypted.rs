@@ -52,6 +52,18 @@ impl<KeyType> std::ops::Deref for Encrypted<KeyType> {
     }
 }
 
+impl<KeyType> std::fmt::Debug for Encrypted<KeyType>
+where
+    KeyType: std::fmt::Debug
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Encrypted")
+            .field("manager", &self.manager)
+            .field("path", &self.path)
+            .finish_non_exhaustive()
+    }
+}
+
 impl<KeyType> Wrapper for Encrypted<KeyType>
 where
     KeyType: Serialize + DeserializeOwned
