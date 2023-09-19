@@ -10,7 +10,7 @@ use crate::fs::traits::Wrapper;
 use crate::local::Local;
 
 pub struct Options {
-    path: PathBuf,
+    pub path: PathBuf,
 }
 
 pub struct Json<KeyType> {

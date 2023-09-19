@@ -11,8 +11,8 @@ use crate::local::Local;
 use crate::crypto;
 
 pub struct Options {
-    path: PathBuf,
-    key: crypto::Key,
+    pub path: PathBuf,
+    pub key: crypto::Key,
 }
 
 pub struct Encrypted<KeyType> {
