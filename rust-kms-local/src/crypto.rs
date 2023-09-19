@@ -22,9 +22,9 @@ pub enum Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Error::Rand(e) => write!(f, "Error::Rand {}", e),
-            Error::ChaCha => write!(f, "Error::ChaCha"),
-            Error::InvalidEncoding => write!(f, "Error::InvalidEncoding")
+            Error::Rand(e) => write!(f, "Rand {}", e),
+            Error::ChaCha => write!(f, "ChaCha"),
+            Error::InvalidEncoding => write!(f, "InvalidEncoding")
         }
     }
 }

@@ -15,6 +15,16 @@ impl<T> From<PoisonError<T>> for Error {
     }
 }
 
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::Poisoned => f.write_str("StorePoisoned")
+        }
+    }
+}
+
+impl std::error::Error for Error {}
+
 #[derive(Debug)]
 pub struct Local<KeyType> {
     store: RwLock<BTreeMap<u64, KeyType>>,

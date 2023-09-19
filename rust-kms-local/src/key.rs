@@ -1,4 +1,5 @@
 use std::time::SystemTime;
+use std::fmt;
 
 #[cfg(feature = "rand")]
 use rand::RngCore;
@@ -8,6 +9,16 @@ use rand::RngCore;
 pub enum Error {
     Timestamp,
 }
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::Timestamp => f.write_str("Timestamp")
+        }
+    }
+}
+
+impl std::error::Error for Error {}
 
 pub struct KeyBuilder<Data> {
     data: Data,
