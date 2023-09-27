@@ -73,7 +73,7 @@ impl<Data> Key<Data> {
 
 #[cfg(feature = "rand")]
 impl Key<Vec<u8>> {
-    pub fn builder_thread_rng(&mut self, size: usize) -> Result<KeyBuilder<Vec<u8>>, rand::Error> {
+    pub fn builder_thread_rng(size: usize) -> Result<KeyBuilder<Vec<u8>>, rand::Error> {
         let mut bytes = vec![0; size];
 
         rand::thread_rng().try_fill_bytes(bytes.as_mut_slice())?;
@@ -84,7 +84,7 @@ impl Key<Vec<u8>> {
         })
     }
 
-    pub fn builder_os_rng(&mut self, size: usize) -> Result<KeyBuilder<Vec<u8>>, rand::Error> {
+    pub fn builder_os_rng(size: usize) -> Result<KeyBuilder<Vec<u8>>, rand::Error> {
         let mut bytes = vec![0; size];
 
         rand::rngs::OsRng.try_fill_bytes(bytes.as_mut_slice())?;
@@ -98,7 +98,7 @@ impl Key<Vec<u8>> {
 
 #[cfg(feature = "rand")]
 impl<const N: usize> Key<[u8; N]> {
-    pub fn builder_thread_rng(&mut self) -> Result<KeyBuilder<[u8; N]>, rand::Error> {
+    pub fn builder_thread_rng() -> Result<KeyBuilder<[u8; N]>, rand::Error> {
         let mut bytes = [0; N];
 
         rand::thread_rng().try_fill_bytes(&mut bytes)?;
@@ -109,7 +109,7 @@ impl<const N: usize> Key<[u8; N]> {
         })
     }
 
-    pub fn builder_os_rng(&mut self) -> Result<KeyBuilder<[u8; N]>, rand::Error> {
+    pub fn builder_os_rng() -> Result<KeyBuilder<[u8; N]>, rand::Error> {
         let mut bytes = [0; N];
 
         rand::rngs::OsRng.try_fill_bytes(&mut bytes)?;
